@@ -1,0 +1,10 @@
+# Build directories
+binarypp.egg-info/
+build/
+dist/
+
+# Cache
+binarypp/__pycache__/
+
+# Testing files
+code.bin
