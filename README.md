@@ -1,75 +1,56 @@
-**inspiration:** got bored of recreating the cpython vm, so im making my own *ʸᵃʸ*
+# Binary++ Programming Langauge
 
-well im using vm features to create a language
-
-esolang, that is
-
-hey at least you can say you code in binary now
-
-assuming you have a binary editor
-
-**features:**
-- stack but also heap(?) based
-- idk
-- you can write to files i guess... i hope
-- you got loops, conditionals, ..., wait how am i supposed to make it so you can open files
-- idk how reading from stdin/file is gonna work
-- oh right back to features
-- ....
-- you can do math
+<p align="center">
+  <a href="https://github.com/psf/black" target="_blank"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black"></a>
+  <img src="https://img.shields.io/badge/i%20need%20another-badge-651cdb.svg" alt="Empty">
+</p>
 
 
-**concerns:**
-- the claim of being a binary esolang falls apart when you use a hex edi- SHUT **SHUT**
-- files are never closed after being opened
+Binary++ is an esoteric programming language based on* binary.
 
-this is what it looks like after you convert everything into opcodes
+\* It's meant to be based on binary, but you can write Binary++ code using different means.
+
+## Features
+- Stack and heap(?) based.
+  - I don't think this is actually a heap but I don't have a better term for it.
+- Full STDIN/OUT access
+- A free, unlimited use "I code in Binary" pass
+
+## Examples
+To avoid confusion, the examples shown here are only the binary representations of each character. The code itself usually contains unprintable characters which cannot be shown. Think of it like a `hexdump` of the file but in binary.
+
+### Hello, world!
+Raw:
 ```
-PUSH_STACK 10 (00001010)
-STORE_MEMORY 1 (00000001)
-PUSH_STACK "file.txt"
-STORE_MEMORY 2 (00000010)
-
-MAKE_MARKER 1 (00000001)
-READ_FROM 0 (00000000 - stdin)
-WRITE_TO
-GOTO_MARKER 1
-PUSH_STACK "Hello, "
-WRITE_TO 0 (00000000 - stdout)
-WRITE_TO 0 (00000000 - stdout)
-
-OPEN_FILE 2 ("file.txt" 00000010)
-STORE_MEMORY 3 ()
-READ_FROM 
-```
-```
-00001000 00000000
-00000010 01001000 01100101 01101100 01101100 01101111 00101100 00100000 00000000
-00001001 00000000
+00000101 01001000 01100101 01101100 01101100 01101111 00101100 00100000 01110111 01101111 01110010 01101100 01100100 00100001 00001010 00000000
 00001001 00000000
 ```
-
-
+Translated:
 ```
-POP_STACK    = 0b00000001
-PUSH_STACK   = 0b00000100
-PUSH_STRING_STACK = 0b00000101
-PUSH_LONG_STACK   = 0b00000110
-STORE_MEMORY = 0b00000011
-READ_FROM    = 0b00001000
-WRITE_TO     = 0b00001001
-OPEN_FILE    = 0b00001100
-MAKE_MARKER  = 0b00010000
-GOTO_MARKER  = 0b00010001
-BINARY_ADD          = 0b10000001
-BINARY_SUBTRACT     = 0b10000010
-BINARY_MULTIPLY     = 0b10000101
-BINARY_POWER        = 0b10000110
-BINARY_TRUE_DIVIDE  = 0b10001001
-BINARY_FLOOR_DIVIDE = 0b10001010
-BINARY_MODULO       = 0b10000100
-BINARY_AND          = 0b11000001
-BINARY_OR           = 0b11000010
-BINARY_XOR          = 0b11000011
-BINARY_NOT          = 0b11000100
+PUSH_STRING_STACK Hello, world
+WRITE_TO 00000000 (stdout)
 ```
+
+## TODO
+**Language related**
+- [x] Full STDIN/OUT support
+- [ ] Jumps (markers)
+  - [x] MAKE_MARKER and GOTO_MARKER
+  - [ ] Initialize markers before execution
+- [ ] Conditionals
+
+**Tools**
+- [ ] Proper CLI argument parsing
+  - [ ] Verbosity for debugging
+  - [ ] REPL mode?
+- [ ] Port to C (or to Rust that would be fun)
+- [ ] Syntax checker
+  - Verify no arguments are missing
+  - Missing terminator checker (PUSH_STRING_STACK)
+- [ ] Compiler?
+  - A compiler for binary sounds cool, but I have no knowledge in writing compilers
+
+## Inspiration
+While recreating the CPython VM, I came across the idea of not only just creating my own bytecode, but creating my own language. In VMs, bytecode is generally represented with either hexadecimal or decimal, but I chose the route of representing them in binary because...
+
+**who doesnt want to code in binary?**
