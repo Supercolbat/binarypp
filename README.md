@@ -1,10 +1,9 @@
-# Binary++ Programming Langauge
+![Binary++ header](https://user-images.githubusercontent.com/24477470/152656210-5d1d0168-7de3-480a-a981-b746820a55a5.png)
 
 <p align="center">
   <a href="https://github.com/psf/black" target="_blank"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black"></a>
   <img src="https://img.shields.io/badge/i%20need%20another-badge-651cdb.svg" alt="Empty">
 </p>
-
 
 Binary++ is an esoteric programming language based on* binary.
 
