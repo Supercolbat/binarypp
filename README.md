@@ -1,8 +1,8 @@
-![Binary++ header](https://user-images.githubusercontent.com/24477470/152656210-5d1d0168-7de3-480a-a981-b746820a55a5.png)
+![Binary++ header image](https://user-images.githubusercontent.com/24477470/152656210-5d1d0168-7de3-480a-a981-b746820a55a5.png)
 
 <p align="center">
   <a href="https://github.com/psf/black" target="_blank"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black"></a>
-  <img src="https://img.shields.io/badge/i%20need%20another-badge-651cdb.svg" alt="Empty">
+  <img src="https://img.shields.io/badge/i%20need%20another-badge-651cdb.svg" alt="i need another badge">
 </p>
 
 Binary++ is an esoteric programming language based on* binary.
@@ -16,7 +16,7 @@ Binary++ is an esoteric programming language based on* binary.
 - A free, unlimited use "I code in Binary" pass
 
 ## Examples
-To avoid confusion, the examples shown here are only the binary representations of each character. The code itself usually contains unprintable characters which cannot be shown. Think of it like a `hexdump` of the file but in binary.
+To clarify, the examples shown here are in the binary representations of each character. The code itself usually contains unprintable characters which cannot be displayed. Think of it like a `hexdump` of the file but in binary.
 
 ### Hello, world!
 Raw:
@@ -33,17 +33,20 @@ WRITE_TO 00000000 (stdout)
 ## TODO
 **Language related**
 - [x] Full STDIN/OUT support
-- [ ] Jumps (markers)
+- [x] Jumps (markers)
   - [x] MAKE_MARKER and GOTO_MARKER
-  - [ ] Initialize markers before execution
-- [ ] Conditionals
+  - [x] Initialize markers before execution
+- [x] Conditionals
+  - [x] Implement IF_NEXT_SKIP and SKIP_NEXT 
+  - [x] IF_NEXT_SKIP and SKIP_NEXT should skip instructions and ignore arguments
 
 **Tools**
 - [ ] Proper CLI argument parsing
+  - [x] Translate a "raw binary" file into characters
   - [ ] Verbosity for debugging
   - [ ] REPL mode?
-- [ ] Port to C (or to Rust that would be fun)
-- [ ] Syntax checker
+- [ ] Port to C (or to Rust)
+- [x] Syntax checker
   - Verify no arguments are missing
   - Missing terminator checker (PUSH_STRING_STACK)
 - [ ] Compiler?

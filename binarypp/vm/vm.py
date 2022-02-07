@@ -2,10 +2,11 @@ from typing import Any, List, Union
 from sys import stdout, stdin
 import os.path
 import io
-from binarypp.stack import Stack
-from binarypp.memory import Memory
-from binarypp.types import Marker
-from binarypp.opcodes import *
+import binarypp.parser as parser
+from binarypp.types import Marker, String, Instruction
+from binarypp.vm.stack import Stack
+from binarypp.vm.memory import Memory
+from binarypp.vm.opcodes import *
 
 # fmt: off
 MODES = ["r", "r+", "rb", "rb+", # 0000 - 0011
@@ -21,7 +22,7 @@ class VirtualMachine:
         self.memory = Memory()
 
         self.IP: int = -1  # Instruction Pointer
-        self.stream: List[int] = []
+        self.stream: List[Instruction] = []
         self.stream_size: int = 0
 
     def next_instruction(self) -> Union[int, None]:
@@ -30,11 +31,17 @@ class VirtualMachine:
             return self.stream[self.IP]
 
     def main_loop(self, stream: List[int]) -> None:
-        self.stream = stream
-        self.stream_size = len(stream) - 1
+        self.stream = parser.parse(stream)
+        self.stream_size = len(self.stream) - 1
 
-        while (opcode := self.next_instruction()) != None:
+        self.initialize_markers()
+
+        while (inst := self.next_instruction()) != None:
+            opcode = inst.code
+            args = inst.arguments
+
             # print(bin(opcode)[2:].rjust(8, "0"))
+
             if opcode == POP_STACK:
                 """
                 Pops one value from the stack
@@ -51,7 +58,7 @@ class VirtualMachine:
                 PUSH_STACK 1
                 PUSH_STACK 2
                 """
-                self.stack.push(self.next_instruction())
+                self.stack.push(args[0])
 
             elif opcode == PUSH_STRING_STACK:
                 """
@@ -60,12 +67,7 @@ class VirtualMachine:
                 PUSH_STRING_STACK Hello\0
                 PUSH_STRING_STACK  world\0
                 """
-                string = ""
-                while (oparg := self.next_instruction()) != 0:
-                    # print(chr(oparg), end="")
-                    string += chr(oparg)
-                # print()
-                self.stack.push(string)
+                self.stack.push(String(args))
 
             elif opcode == PUSH_LONG_STACK:
                 """
@@ -73,12 +75,20 @@ class VirtualMachine:
 
                 PUSH_LONG_STACK 255 255 10\0
                 """
-                long = 0
-                while (oparg := self.next_instruction()) != 0:
-                    # print(oparg, end=" ")
-                    long += oparg
-                # print()g
-                self.stack.push(long)
+                self.stack.push(sum(args))
+
+            elif opcode == LOAD_MEMORY:
+                """
+                Pushes the value at the given memory address to the stack.
+                0 is a reserved address.
+
+                PUSH_STACK 5
+                STORE_MEMORY 1
+                LOAD_MEMORY 1
+                LOAD_MEMORY 1
+                BINARY_ADD
+                """
+                self.stack.push(self.memory[args[0]])
 
             elif opcode == STORE_MEMORY:
                 """
@@ -88,10 +98,18 @@ class VirtualMachine:
                 PUSH_STACK 5
                 STORE_MEMORY 1
                 """
-                addr = self.next_instruction()
-                if addr == 0:
-                    raise Exception("Accessing reserved memory")
-                self.memory[addr] = self.stack.pop()
+                self.memory[args[0]] = self.stack.pop()
+
+            elif opcode == DUP_TOP:
+                """
+                Duplicates the top-most stack value.
+
+                PUSH_STACK 5
+                DUP_TOP
+                """
+                val = self.stack.pop()
+                self.stack.push(val)
+                self.stack.push(val)
 
             elif opcode == READ_FROM:
                 """
@@ -106,10 +124,10 @@ class VirtualMachine:
                 READ_FROM 1
                 WRITE_TO 0 (stdin)
                 """
-                addr = self.next_instruction()
+                addr = args[0]
 
                 if addr == 0:
-                    self.stack.push(stdin.read())
+                    self.stack.push(String(stdin.read()))
                 else:
                     stream = self.memory[addr]
                     if not isinstance(stream, io.TextIOWrapper):
@@ -121,18 +139,44 @@ class VirtualMachine:
                         string += char
                     self.stack.push(string)
 
+            elif opcode == READ_CHAR_FROM:
+                """
+                Reads one char from a source. Pushes the char to stack.
+                0 is stdin. Any other value is read from memory to determine source.
+
+                READ_CHAR_FROM 0 (stdin)
+                PUSH_STACK 48
+                BINARY_SUBTRACT
+                READ_CHAR_FROM 0 (stdin)
+                BINARY_ADD
+                WRITE_TO 0 (stdin)
+                """
+                addr = args[0]
+
+                if addr == 0:
+                    # self.stack.push(String(stdin.read(1)))
+                    self.stack.push(ord(stdin.read(1)))
+                else:
+                    stream = self.memory[addr]
+                    if not isinstance(stream, io.TextIOWrapper):
+                        raise Exception("MEMORY[{}] is not a file".format(addr))
+
+                    self.stack.push(String(stream.read(1)))
+
             elif opcode == WRITE_TO:
                 """
                 Writes the top-most stack to a source.
                 0 is stdout. Any other value is reads from memory to determine source.
                 """
-                addr = self.next_instruction()
+                addr = args[0]
                 if addr == 0:
                     content = self.stack.pop()
+                    # print(content)
                     if isinstance(content, int):
                         stdout.write(chr(content))
                     else:
-                        stdout.write(content)
+                        stdout.write(str(content))
+                    stdout.flush()
                 else:
                     stream = self.memory[addr]
                     if not isinstance(stream, io.TextIOWrapper):
@@ -148,7 +192,7 @@ class VirtualMachine:
                 PUSH_STRING_STACK "file.txt"
                 OPEN_FILE
                 """
-                mode = self.next_instruction()
+                mode = args[0]
                 if 0b0000 <= mode <= 0b1111:
                     file = self.stack.pop()
                     # print(MODES[mode])
@@ -164,7 +208,7 @@ class VirtualMachine:
 
                 MAKE_MARKER 1
                 """
-                self.memory[self.next_instruction()] = Marker(self.IP)
+                self.memory[args[0]] = Marker(self.IP)
 
             elif opcode == GOTO_MARKER:
                 """
@@ -178,14 +222,13 @@ class VirtualMachine:
                 MAKE_MARKER 2
                 GOTO_MARKER 1
                 """
-                addr = self.next_instruction()
-                target_marker = self.memory[addr]
+                target_marker = self.memory[args[0]]
                 if not isinstance(target_marker, Marker):
-                    raise Exception("Invalid marker at MEMORY[{}]".format(addr))
+                    raise Exception("Invalid marker at MEMORY[{}]".format(args[0]))
                 self.IP = target_marker.index - 1
 
             #
-            # Mathematics
+            # Arithmetic
             #
             elif opcode == BINARY_ADD:
                 b = self.stack.pop()
@@ -222,6 +265,10 @@ class VirtualMachine:
                 a = self.stack.pop()
                 self.stack.push(a % b)
 
+            #
+            # Logic gates
+            #
+
             elif opcode == BINARY_AND:
                 b = self.stack.pop()
                 a = self.stack.pop()
@@ -251,7 +298,62 @@ class VirtualMachine:
                 a = self.stack.pop()
                 self.stack.push(a >> b)
 
+            #
+            # Equality
+            #
+
+            elif opcode == EQUAL_TO:
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.push(a == b)
+
+            elif opcode == NOT_EQUAL_TO:
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.push(a != b)
+
+            elif opcode == LESS_THAN:
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.push(a < b)
+
+            elif opcode == LESS_EQUAL_THAN:
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.push(a <= b)
+
+            elif opcode == GREATER_THAN:
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.push(a > b)
+
+            elif opcode == GREATER_EQUAL_THAN:
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.push(a >= b)
+
+            #
+            # Conditionals
+            #
+
+            elif opcode == IF_RUN_NEXT:
+                if not self.stack.pop():
+                    self.IP += args[0]
+
+            elif opcode == SKIP_NEXT:
+                # the oparg should point to the last instruction to be skipped
+                # next main_loop iteration should increment self.IP by one to the next instruction
+                # adding one here is a temporary fix until further investigation takes place
+                self.IP += args[0] + 1
+
             else:
-                raise NotImplemented(
-                    "Unknown instruction: {}".format(bin(opcode)[2:].rshift(2, "0"))
+                raise NotImplementedError(
+                    "Unknown instruction: {}".format(bin(opcode)[2:].rjust(2, "0"))
                 )
+
+    def initialize_markers(self):
+        while (inst := self.next_instruction()) != None:
+            if inst.code == MAKE_MARKER:
+                self.memory[inst.arguments[0]] = Marker(self.IP)
+
+        self.IP = -1

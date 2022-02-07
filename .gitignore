@@ -5,6 +5,7 @@ dist/
 
 # Cache
 binarypp/__pycache__/
+binarypp/vm/__pycache__/
 
 # Testing files
 ignore/
