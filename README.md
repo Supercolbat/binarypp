@@ -12,7 +12,7 @@ Binary++ is an esoteric programming language based on binary*.
 **Disclaimer**: The instruction set may change as Binary++ is still in early development.
 
 ## Features
-- Turing complete (*Verification needed*)
+- Turing complete
 - Stack and heap(?) based.
   - I don't think this is actually a heap but I don't have a better term for it.
 - Full STDIN/OUT access
