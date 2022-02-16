@@ -28,6 +28,12 @@ def main() -> None:
         default=0,
     )
     parser.add_argument(
+        "--step",
+        "-s",
+        help="Runs the code step by step.",
+        action="store_true",
+    )
+    parser.add_argument(
         "--version",
         help="Prints the version and exits.",
         action="store_true",
@@ -74,13 +80,13 @@ def main() -> None:
 
         code = [int(code, 2) for code in code]
 
-        vm = VirtualMachine()
+        vm = VirtualMachine(args)
         vm.main_loop(code)
 
     else:
         with open(args.FILE, "r") as file:
             code = utils.chars_to_binary(file.read())
 
-        vm = VirtualMachine()
+        vm = VirtualMachine(args)
         vm.main_loop(code)
         # print(vm.memory.memory)

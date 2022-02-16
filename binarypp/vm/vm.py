@@ -2,6 +2,7 @@ from typing import Any, List, Union
 from sys import stdout, stdin
 import os.path
 import io
+from argparse import Namespace
 import binarypp.parser as parser
 import binarypp.utils as utils
 from binarypp.types import Marker, String, Instruction
@@ -19,7 +20,9 @@ MODES = ["r", "r+", "rb", "rb+", # 0000 - 0011
 
 
 class VirtualMachine:
-    def __init__(self):
+    def __init__(self, flags: List[Namespace]):
+        self.flags: List[Namespace] = flags
+        
         self.stack = Stack()
         self.memory = Memory()
 
@@ -382,8 +385,8 @@ class VirtualMachine:
                     "Unknown instruction: {}".format(bin(opcode)[2:].rjust(2, "0"))
                 )
 
-            # print("\nInst: {} {} ({})\nMem: {}\nStk: {}".format(OP_MAP[opcode], args, self.forwarded_args, self.memory.memory, self.stack.stack))
-            # input()
+            if self.flags.step:
+                input("\nInst: {} {} ({})\nMem: {}\nStk: {}".format(OP_MAP[opcode], args, self.forwarded_args, self.memory.memory, self.stack.stack))
 
     def initialize_markers(self):
         while (inst := self.next_instruction()) != None:
