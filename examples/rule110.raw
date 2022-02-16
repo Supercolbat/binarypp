@@ -4,7 +4,7 @@
 ;; START OF BOARD: 8
 
                     ;; Set the size of the board
-00000100 00111110   PUSH_STACK 30 (11110)
+00000100 00011110   PUSH_STACK 30
 00000011 00000100   STORE_MEMORY 4
 
                     ;; Set the second-to-last board element to 1
