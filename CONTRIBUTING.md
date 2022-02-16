@@ -6,5 +6,8 @@ Binary++ aims to be a minimalistic but complex language. Features should only be
 
 Currently, there is no clear outline for what will or will not get accepted.
 
+- Depend on zero dependencies unless absolutely necessary.
+- 
+
 # Coding style
 Binary++ follows the [Black](https://github.com/psf/black) coding style and the [PEP 8 naming conventions](https://www.python.org/dev/peps/pep-0008/#naming-conventions).

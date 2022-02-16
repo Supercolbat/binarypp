@@ -8,8 +8,14 @@ binarypp/__pycache__/
 binarypp/vm/__pycache__/
 
 # Testing files
+.pytest_cache/
 ignore/
 code.bin
 
+# Development scripts
+install.sh
+fmt.sh
+
 # Replit!!
 .replit
+.breakpoints

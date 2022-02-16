@@ -3,10 +3,12 @@ from sys import stdout, stdin
 import os.path
 import io
 import binarypp.parser as parser
+import binarypp.utils as utils
 from binarypp.types import Marker, String, Instruction
 from binarypp.vm.stack import Stack
 from binarypp.vm.memory import Memory
 from binarypp.vm.opcodes import *
+from binarypp.vm.opmap import OP_MAP
 
 # fmt: off
 MODES = ["r", "r+", "rb", "rb+", # 0000 - 0011
@@ -25,6 +27,9 @@ class VirtualMachine:
         self.stream: List[Instruction] = []
         self.stream_size: int = 0
 
+        self.last_goto: int = 0
+        self.forwarded_args: List[Any] = []
+
     def next_instruction(self) -> Union[int, None]:
         if self.IP < self.stream_size:
             self.IP += 1
@@ -38,9 +43,13 @@ class VirtualMachine:
 
         while (inst := self.next_instruction()) != None:
             opcode = inst.code
-            args = inst.arguments
+            if self.forwarded_args:
+                args = self.forwarded_args
+                self.forwarded_args = []
+            else:
+                args = inst.arguments
 
-            # print(bin(opcode)[2:].rjust(8, "0"))
+            # print(utils.to_binary_str(opcode), args)
 
             if opcode == POP_STACK:
                 """
@@ -88,6 +97,7 @@ class VirtualMachine:
                 LOAD_MEMORY 1
                 BINARY_ADD
                 """
+                # print("loaded:", self.memory[args[0]])
                 self.stack.push(self.memory[args[0]])
 
             elif opcode == STORE_MEMORY:
@@ -222,10 +232,16 @@ class VirtualMachine:
                 MAKE_MARKER 2
                 GOTO_MARKER 1
                 """
+                if args[0] == 0:
+                    self.IP = self.last_goto
+                    continue
+
                 target_marker = self.memory[args[0]]
                 if not isinstance(target_marker, Marker):
                     raise Exception("Invalid marker at MEMORY[{}]".format(args[0]))
-                self.IP = target_marker.index - 1
+
+                self.last_goto = self.IP
+                self.IP = target_marker.index
 
             #
             # Arithmetic
@@ -302,7 +318,7 @@ class VirtualMachine:
             # Equality
             #
 
-            elif opcode == EQUAL_TO:
+            elif opcode == EQUALS_TO:
                 b = self.stack.pop()
                 a = self.stack.pop()
                 self.stack.push(a == b)
@@ -344,16 +360,38 @@ class VirtualMachine:
                 # the oparg should point to the last instruction to be skipped
                 # next main_loop iteration should increment self.IP by one to the next instruction
                 # adding one here is a temporary fix until further investigation takes place
-                self.IP += args[0] + 1
+                # EDIT: possibly fixed
+                self.IP += args[0]
+
+            #
+            # Uncategorized instructions
+            #
+
+            elif opcode == FORWARD_ARGS:
+                if self.stream[self.IP + 1].code in ONE_ARG:
+                    self.forwarded_args = [self.stack.pop()]
+
+            elif opcode == ROT_TWO:
+                a = self.stack.pop()
+                b = self.stack.pop()
+                self.stack.push(a)
+                self.stack.push(b)
 
             else:
                 raise NotImplementedError(
                     "Unknown instruction: {}".format(bin(opcode)[2:].rjust(2, "0"))
                 )
 
+            # print("\nInst: {} {} ({})\nMem: {}\nStk: {}".format(OP_MAP[opcode], args, self.forwarded_args, self.memory.memory, self.stack.stack))
+            # input()
+
     def initialize_markers(self):
         while (inst := self.next_instruction()) != None:
             if inst.code == MAKE_MARKER:
-                self.memory[inst.arguments[0]] = Marker(self.IP)
+                addr = inst.arguments[0]
+                # Only initialize the first occurance of a marker
+                if addr < self.memory.size and isinstance(self.memory[addr], Marker):
+                    continue
+                self.memory[addr] = Marker(self.IP)
 
         self.IP = -1
