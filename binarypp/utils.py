@@ -11,7 +11,3 @@ def to_binary_str(num: int) -> str:
 
 def binary_to_chars(binary: List[str]) -> str:
     return "".join([chr(int(code, 2)) for code in binary])
-
-
-def chars_to_binary(chars: str) -> List[int]:
-    return [ord(inst) for inst in chars]

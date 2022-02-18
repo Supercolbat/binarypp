@@ -22,7 +22,7 @@ MODES = ["r", "r+", "rb", "rb+", # 0000 - 0011
 class VirtualMachine:
     def __init__(self, flags: List[Namespace]):
         self.flags: List[Namespace] = flags
-        
+
         self.stack = Stack()
         self.memory = Memory()
 
@@ -53,6 +53,14 @@ class VirtualMachine:
                 args = inst.arguments
 
             # print(utils.to_binary_str(opcode), args)
+            if self.flags.step:
+                print(
+                    "\nInst: {} {} ({})".format(
+                        OP_MAP[opcode],
+                        args,
+                        self.forwarded_args,
+                    )
+                )
 
             if opcode == POP_STACK:
                 """
@@ -124,6 +132,7 @@ class VirtualMachine:
                 self.stack.push(val)
                 self.stack.push(val)
 
+            # TODO: Include new READ_X_FROM instructions
             elif opcode == READ_FROM:
                 """
                 Reads values from a source until the terminator is reached (top stack). Pushes text to stack. Terminator is consumed but excluded.
@@ -386,7 +395,12 @@ class VirtualMachine:
                 )
 
             if self.flags.step:
-                input("\nInst: {} {} ({})\nMem: {}\nStk: {}".format(OP_MAP[opcode], args, self.forwarded_args, self.memory.memory, self.stack.stack))
+                input(
+                    "Mem: {}\nStk: {}".format(
+                        self.memory.memory,
+                        self.stack.stack,
+                    )
+                )
 
     def initialize_markers(self):
         while (inst := self.next_instruction()) != None:

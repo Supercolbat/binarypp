@@ -57,20 +57,20 @@ def main() -> None:
         sys.exit(1)
 
     if args.compile:
-        with open(args.compile, "r") as file:
+        with open(args.compile, "r", encoding="utf-8") as file:
             code = file.read()
         code = utils.binary_to_chars(list(filter(utils.is_binary, code.split())))
 
         # Check for missing args
         binarypp.parser.parse([ord(char) for char in code])
 
-        with open(args.FILE, "w+") as file:
+        with open(args.FILE, "w+", encoding="latin1") as file:
             file.write(code)
 
         print("[+] Successfully compiled file")
 
     elif args.interpret:
-        with open(args.FILE, "r") as file:
+        with open(args.FILE, "r", encoding="utf-8") as file:
             code = file.read()
 
         code = list(filter(utils.is_binary, code.split()))
@@ -84,8 +84,8 @@ def main() -> None:
         vm.main_loop(code)
 
     else:
-        with open(args.FILE, "r") as file:
-            code = utils.chars_to_binary(file.read())
+        with open(args.FILE, "rb") as file:
+            code = file.read()
 
         vm = VirtualMachine(args)
         vm.main_loop(code)

@@ -15,10 +15,6 @@ Ideas for the future:
 POP_STACK         = 0b00000001, 0    # 0 arguments
 PUSH_STACK        = 0b00000001, 1    # 1 argument
 PUSH_STRING_STACK = 0b00000001, ...  # Multiple arguments
-
-2.
-`GOTO_MARKER 0` sets the IP to the last GOTO_MARKER call position.
-This would be a way of returning from a function.
 """
 
 # fmt: off
@@ -31,6 +27,10 @@ STORE_MEMORY        = 0b00000011
 DUP_TOP             = 0b00000111
 READ_FROM           = 0b00001000
 READ_CHAR_FROM      = 0b00001001
+# READ_CHAR_AT        = 0b00001011
+# READ_CHAR_FROM      = 0b00001000
+# READ_STRING_FROM    = 0b00001001
+# READ_INT_FROM       = 0b00001011
 WRITE_TO            = 0b00001010
 OPEN_FILE           = 0b00001100
 MAKE_MARKER         = 0b00001110
