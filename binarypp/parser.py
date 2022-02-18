@@ -1,8 +1,9 @@
-from typing import List, Optional
+import sys
+from typing import List
+
 import binarypp.utils as utils
 from binarypp.types import Instruction
 from binarypp.vm.opcodes import *
-import sys
 
 
 def parse(code: List[int]) -> List[Instruction]:

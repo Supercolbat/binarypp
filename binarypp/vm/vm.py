@@ -1,27 +1,26 @@
-from typing import Any, List, Union
-from sys import stdout, stdin
-import os.path
 import io
 from argparse import Namespace
+from sys import stdin, stdout
+from typing import Any, List, Optional
+
 import binarypp.parser as parser
-import binarypp.utils as utils
-from binarypp.types import Marker, String, Instruction
-from binarypp.vm.stack import Stack
+from binarypp.types import Instruction, Marker, String
 from binarypp.vm.memory import Memory
 from binarypp.vm.opcodes import *
 from binarypp.vm.opmap import OP_MAP
+from binarypp.vm.stack import Stack
 
 # fmt: off
-MODES = ["r", "r+", "rb", "rb+", # 0000 - 0011
-         "w", "w+", "wb", "wb+", # 0100 - 0111
-         "a", "a+", "ab", "ab+", # 1000 - 1011
-         "x", "x+", "xb", "xb+"] # 1100 - 1111
+MODES = ["r", "r+", "rb", "rb+",  # 0000 - 0011
+         "w", "w+", "wb", "wb+",  # 0100 - 0111
+         "a", "a+", "ab", "ab+",  # 1000 - 1011
+         "x", "x+", "xb", "xb+"]  # 1100 - 1111
 # fmt: on
 
 
 class VirtualMachine:
-    def __init__(self, flags: List[Namespace]):
-        self.flags: List[Namespace] = flags
+    def __init__(self, flags: Namespace):
+        self.flags: Namespace = flags
 
         self.stack = Stack()
         self.memory = Memory()
@@ -33,10 +32,11 @@ class VirtualMachine:
         self.last_goto: int = 0
         self.forwarded_args: List[Any] = []
 
-    def next_instruction(self) -> Union[int, None]:
+    def next_instruction(self) -> Optional[Instruction]:
         if self.IP < self.stream_size:
             self.IP += 1
             return self.stream[self.IP]
+        return None
 
     def main_loop(self, stream: List[int]) -> None:
         self.stream = parser.parse(stream)
@@ -44,13 +44,17 @@ class VirtualMachine:
 
         self.initialize_markers()
 
-        while (inst := self.next_instruction()) != None:
-            opcode = inst.code
+        while True:
+            inst = self.next_instruction()
+            if inst is None:
+                break
+
+            opcode = inst.opcode
             if self.forwarded_args:
                 args = self.forwarded_args
                 self.forwarded_args = []
             else:
-                args = inst.arguments
+                args = inst.opargs
 
             # print(utils.to_binary_str(opcode), args)
             if self.flags.step:
@@ -135,7 +139,8 @@ class VirtualMachine:
             # TODO: Include new READ_X_FROM instructions
             elif opcode == READ_FROM:
                 """
-                Reads values from a source until the terminator is reached (top stack). Pushes text to stack. Terminator is consumed but excluded.
+                Reads values from a source until the terminator is reached (top stack).
+                Pushes text to stack. Terminator is consumed but excluded.
                 0 is stdin. Any other value is read from memory to determine source.
 
                 READ_FROM 0 (stdin)
@@ -226,7 +231,8 @@ class VirtualMachine:
 
             elif opcode == MAKE_MARKER:
                 """
-                Creates a marker at its current position in the code. Stores the marker at the given position in memory.
+                Creates a marker at its current position in the code.
+                Stores the marker at the given position in memory.
 
                 MAKE_MARKER 1
                 """
@@ -369,10 +375,6 @@ class VirtualMachine:
                     self.IP += args[0]
 
             elif opcode == SKIP_NEXT:
-                # the oparg should point to the last instruction to be skipped
-                # next main_loop iteration should increment self.IP by one to the next instruction
-                # adding one here is a temporary fix until further investigation takes place
-                # EDIT: possibly fixed
                 self.IP += args[0]
 
             #
@@ -380,7 +382,7 @@ class VirtualMachine:
             #
 
             elif opcode == FORWARD_ARGS:
-                if self.stream[self.IP + 1].code in ONE_ARG:
+                if self.stream[self.IP + 1].opcode in ONE_ARG:
                     self.forwarded_args = [self.stack.pop()]
 
             elif opcode == ROT_TWO:
@@ -402,10 +404,14 @@ class VirtualMachine:
                     )
                 )
 
-    def initialize_markers(self):
-        while (inst := self.next_instruction()) != None:
-            if inst.code == MAKE_MARKER:
-                addr = inst.arguments[0]
+    def initialize_markers(self) -> None:
+        while True:
+            inst = self.next_instruction()
+            if inst is None:
+                break
+
+            if inst.opcode == MAKE_MARKER:
+                addr = inst.opargs[0]
                 # Only initialize the first occurance of a marker
                 if addr < self.memory.size and isinstance(self.memory[addr], Marker):
                     continue

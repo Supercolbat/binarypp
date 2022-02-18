@@ -1,6 +1,7 @@
-import sys
-import os.path
 import argparse
+import os.path
+import sys
+
 import binarypp
 import binarypp.parser
 import binarypp.utils as utils
@@ -59,13 +60,15 @@ def main() -> None:
     if args.compile:
         with open(args.compile, "r", encoding="utf-8") as file:
             code = file.read()
-        code = utils.binary_to_chars(list(filter(utils.is_binary, code.split())))
+        compiled_code = utils.binary_to_chars(
+            list(filter(utils.is_binary, code.split()))
+        )
 
         # Check for missing args
-        binarypp.parser.parse([ord(char) for char in code])
+        binarypp.parser.parse([ord(char) for char in compiled_code])
 
         with open(args.FILE, "w+", encoding="latin1") as file:
-            file.write(code)
+            file.write(compiled_code)
 
         print("[+] Successfully compiled file")
 
@@ -73,20 +76,18 @@ def main() -> None:
         with open(args.FILE, "r", encoding="utf-8") as file:
             code = file.read()
 
-        code = list(filter(utils.is_binary, code.split()))
+        code_binary = [int(c, 2) for c in list(filter(utils.is_binary, code.split()))]
 
         # Check for missing args
-        binarypp.parser.parse([ord(char) for char in utils.binary_to_chars(code)])
-
-        code = [int(code, 2) for code in code]
+        binarypp.parser.parse(code_binary)
 
         vm = VirtualMachine(args)
-        vm.main_loop(code)
+        vm.main_loop(code_binary)
 
     else:
-        with open(args.FILE, "rb") as file:
-            code = file.read()
+        with open(args.FILE, "rb") as bytes_file:
+            code_bytes = bytes_file.read()
 
         vm = VirtualMachine(args)
-        vm.main_loop(code)
+        vm.main_loop([int(c) for c in code_bytes])
         # print(vm.memory.memory)

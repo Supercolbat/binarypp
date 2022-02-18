@@ -18,6 +18,7 @@ PUSH_STRING_STACK = 0b00000001, ...  # Multiple arguments
 """
 
 # fmt: off
+# flake8: noqa
 POP_STACK           = 0b00000001
 PUSH_STACK          = 0b00000100
 PUSH_STRING_STACK   = 0b00000101

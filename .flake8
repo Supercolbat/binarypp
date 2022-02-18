@@ -1,0 +1,5 @@
+[flake8]
+max-line-length = 88
+select = C,E,F,W,B,B9
+ignore = F405, F403
+exclude = __init__.py, tests/*.py

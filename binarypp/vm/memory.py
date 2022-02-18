@@ -2,7 +2,7 @@ from typing import Any, List
 
 
 class Memory:
-    def __init__(self):
+    def __init__(self) -> None:
         self.memory: List[Any] = [0]
         self.size: int = 1
 

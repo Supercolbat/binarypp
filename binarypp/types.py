@@ -1,4 +1,5 @@
-from typing import List, Optional, Union
+from typing import List, Union
+
 import binarypp.utils as utils
 
 
@@ -6,7 +7,7 @@ class Marker:
     def __init__(self, index: int):
         self.index = index
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Marker({})".format(self.index)
 
 
@@ -21,19 +22,17 @@ class String:
         else:
             self.data = [data]
 
-    def __repr__(self):
-        return "".join(chr(code) for code in self.data)
-
-    def __str__(self):
+    def __repr__(self) -> str:
         return "".join(chr(code) for code in self.data)
 
 
 class Instruction:
-    def __init__(self, code: int, arguments: Optional[List[int]] = []):
-        self.code = code
-        self.arguments = arguments
+    def __init__(self, opcode: int, opargs: List[int] = []):
+        self.opcode: int = opcode
+        self.opargs: List[int] = opargs
 
-    def __repr__(self):
-        return "Instruction({}, {})".format(
-            utils.to_binary_str(self.code), self.arguments
+    def __repr__(self) -> str:
+        return "Instruction({}, [{}])".format(
+            utils.to_binary_str(self.opcode),
+            ", ".join([utils.to_binary_str(code) for code in self.opargs]),
         )

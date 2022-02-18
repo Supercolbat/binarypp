@@ -9,8 +9,10 @@ binarypp/vm/__pycache__/
 
 # Testing files
 .pytest_cache/
+.mypy_cache/
 ignore/
 code.bin
+.coverage
 
 # Development scripts
 install.sh
