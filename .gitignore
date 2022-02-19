@@ -6,6 +6,7 @@ dist/
 # Cache
 binarypp/__pycache__/
 binarypp/vm/__pycache__/
+tests/__pycache__/
 
 # Testing files
 .pytest_cache/

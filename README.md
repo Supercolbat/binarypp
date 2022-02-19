@@ -15,7 +15,7 @@ Binary++ is an esoteric programming language based on binary*.
 - Turing complete
 - Stack and heap(?) based.
   - I don't think this is actually a heap but I don't have a better term for it.
-- Full STDIN/OUT access
+- Full STDIN/OUT access (mostly)
 - A free, unlimited use "I code in Binary" pass
 
 ## Examples
@@ -39,10 +39,17 @@ If you already have a compiled Binary++ program, you can run it with:
 binarypp path/to/your/code.bin
 ```
 
-If you wrote your code in plaintext ("Raw" in Examples), you can first compile it, and then run it.
+If you wrote your code in plaintext ("Raw" in Examples), you can either compile it or interpret it.
+
+To compile:
 ```sh
 binarypp --compile path/to/your/plaintext.raw output.bin
 binarypp output.bin
+```
+
+To interpet:
+```sh
+binarypp --interpret path/to/your/plaintext.raw
 ```
 
 The file extensions `.raw` and `.bin` are not required and are only used to highlight the difference between plaintext and compiled.
