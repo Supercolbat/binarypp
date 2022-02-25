@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/i%20need%20another-badge-651cdb.svg" alt="i need another badge">
 </p>
 
-Binary++ is a multi-paradigm, esoteric programm language that is based on binary.
+Binary++ is a multi-paradigm, esoteric programming language that is based on binary.
 
 To be specific, Binary++ is an esoteric, stack-based, imperative, semi-structured programming language
 
