@@ -5,11 +5,11 @@
   <img src="https://img.shields.io/badge/i%20need%20another-badge-651cdb.svg" alt="i need another badge">
 </p>
 
-Binary++ is an esoteric programming language based on binary*.
+Binary++ is a multi-paradigm, esoteric programm language that is based on binary.
 
-\* It's meant to be based on binary, but you can write Binary++ code without it.
+To be specific, Binary++ is an esoteric, stack-based, imperative, semi-structured programming language
 
-**Disclaimer**: The instruction set may change as Binary++ is still in early development.
+**Disclaimer**: The instruction set may change as Binary++ is still in early development, meaning that code in one version may not work in another.
 
 ## Features
 - Turing complete

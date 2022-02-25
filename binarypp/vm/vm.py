@@ -32,6 +32,8 @@ class VirtualMachine:
         self.last_goto: int = 0
         self.forwarded_args: List[Any] = []
 
+        self.target_IP = -1
+
     def next_instruction(self) -> Optional[Instruction]:
         if self.IP < self.stream_size:
             self.IP += 1
@@ -49,6 +51,9 @@ class VirtualMachine:
             if inst is None:
                 break
 
+            if self.IP > self.target_IP:
+                self.target_IP = -1
+
             opcode = inst.opcode
             if self.forwarded_args:
                 args = self.forwarded_args
@@ -56,13 +61,13 @@ class VirtualMachine:
             else:
                 args = inst.opargs
 
-            # print(utils.to_binary_str(opcode), args)
             if self.flags.step:
                 print(
-                    "\nInst: {} {} ({})".format(
+                    "\nInst: {} {} ({}){}".format(
                         OP_MAP[opcode],
                         args,
                         self.forwarded_args,
+                        f" {self.target_IP - self.IP}" if self.target_IP >= 0 else "",
                     )
                 )
 
@@ -371,11 +376,15 @@ class VirtualMachine:
             #
 
             elif opcode == IF_RUN_NEXT:
+                self.target_IP = self.IP + args[0]
                 if not self.stack.pop():
                     self.IP += args[0]
 
             elif opcode == SKIP_NEXT:
                 self.IP += args[0]
+
+            elif opcode == GO_BACK:
+                self.IP -= args[0] + 1
 
             #
             # Uncategorized instructions
