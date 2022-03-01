@@ -5,15 +5,16 @@
   <img src="https://img.shields.io/badge/i%20need%20another-badge-651cdb.svg" alt="i need another badge">
 </p>
 
-Binary++ is a multi-paradigm, esoteric programm language that is based on binary.
+Binary++ is a multi-paradigm, esoteric programming language that is based on binary.
 
-To be specific, Binary++ is an esoteric, stack-based, imperative, semi-structured programming language
+Specifically, Binary++ is an interpreted esoteric, stack-based, imperative, dual-structured programming language.
+
+To clarify on that last one, Binary++ supports both structured and unstructured programs.
 
 **Disclaimer**: The instruction set may change as Binary++ is still in early development, meaning that code in one version may not work in another.
 
 ## Features
 - Turing complete
-- Stack and heap(?) based.
   - I don't think this is actually a heap but I don't have a better term for it.
 - Full STDIN/OUT access (mostly)
 - A free, unlimited use "I code in Binary" pass

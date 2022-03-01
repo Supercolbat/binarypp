@@ -1,3 +1,4 @@
+
 """
 Test features in binarypp.vm.stack
 """
@@ -11,7 +12,7 @@ from binarypp.vm.opcodes import *
 
 class TestVM:
     def setup_class(self):
-        self.vm = VirtualMachine(Namespace(step=None))
+        self.vm = VirtualMachine("test_file.bin", Namespace(step=None))
         self.vm.stream = [
             Instruction(GOTO_MARKER, [1]),
             Instruction(MAKE_MARKER, [1]),
@@ -20,11 +21,15 @@ class TestVM:
         ]
         self.vm.stream_size = len(self.vm.stream) - 1
 
+    def test_setup(self):
+        assert self.vm.frames[0].file == "test_file.bin"
+
     def test_next_instruction(self):
         inst = self.vm.next_instruction()
         assert inst.opcode == GOTO_MARKER
         assert inst.opargs == [1]
-        assert self.vm.IP == 0
+        assert self.vm.IP.frame == 0
+        assert self.vm.IP.inst == 0
 
         # Reset instruction pointer after testing
         self.vm.IP = -1

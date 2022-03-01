@@ -3,6 +3,7 @@ import os.path
 import sys
 
 import binarypp
+import binarypp.logging as logging
 import binarypp.parser
 import binarypp.utils as utils
 from binarypp.vm import VirtualMachine
@@ -49,13 +50,11 @@ def main() -> None:
 
     # Check if file argument is missing
     if not args.FILE:
-        print("[-] Missing FILE argument")
-        sys.exit(1)
+        logging.error("Missing FILE argument")
 
     # Verify file exists
     if not os.path.isfile(args.compile if args.compile else args.FILE):
-        print("[-] {} is not a file".format(args.FILE))
-        sys.exit(1)
+        logging.error("{} is not a file".format(args.FILE))
 
     if args.compile:
         with open(args.compile, "r", encoding="utf-8") as file:
@@ -70,7 +69,7 @@ def main() -> None:
         with open(args.FILE, "w+", encoding="latin1") as file:
             file.write(compiled_code)
 
-        print("[+] Successfully compiled file")
+        logging.success("Successfully compiled file")
 
     elif args.interpret:
         with open(args.FILE, "r", encoding="utf-8") as file:
@@ -81,13 +80,13 @@ def main() -> None:
         # Check for missing args
         binarypp.parser.parse(code_binary)
 
-        vm = VirtualMachine(args)
+        vm = VirtualMachine(args.FILE, args)
         vm.main_loop(code_binary)
 
     else:
         with open(args.FILE, "rb") as bytes_file:
             code_bytes = bytes_file.read()
 
-        vm = VirtualMachine(args)
+        vm = VirtualMachine(args.FILE, args)
         vm.main_loop([int(c) for c in code_bytes])
         # print(vm.memory.memory)

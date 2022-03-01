@@ -1,10 +1,12 @@
 import io
+import os.path
 from argparse import Namespace
 from sys import stdin, stdout
 from typing import Any, List, Optional
 
+import binarypp.logging as logging
 import binarypp.parser as parser
-from binarypp.types import Instruction, Marker, String
+from binarypp.types import Instruction, Marker, Pointer, String
 from binarypp.vm.memory import Memory
 from binarypp.vm.opcodes import *
 from binarypp.vm.opmap import OP_MAP
@@ -19,45 +21,41 @@ MODES = ["r", "r+", "rb", "rb+",  # 0000 - 0011
 
 
 class VirtualMachine:
-    def __init__(self, flags: Namespace):
+    def __init__(self, file: str, flags: Namespace):
         self.flags: Namespace = flags
+        self.IP: Pointer = Pointer(0, -1)  # Instruction Pointer
+        self.frames: List[Frame] = [Frame(file)]
+        self.stack: Stack = Stack()
 
-        self.stack = Stack()
-        self.memory = Memory()
-
-        self.IP: int = -1  # Instruction Pointer
-        self.stream: List[Instruction] = []
-        self.stream_size: int = 0
-
-        self.last_goto: int = 0
-        self.forwarded_args: List[Any] = []
-
-        self.target_IP = -1
+        self.last_goto: Pointer = Pointer(0, 0)
 
     def next_instruction(self) -> Optional[Instruction]:
-        if self.IP < self.stream_size:
-            self.IP += 1
-            return self.stream[self.IP]
+        frame = self.frames[self.IP.frame]
+        if self.IP.inst < frame.stream_size:
+            self.IP.inst += 1
+            return frame.stream[self.IP.inst]
         return None
 
     def main_loop(self, stream: List[int]) -> None:
-        self.stream = parser.parse(stream)
-        self.stream_size = len(self.stream) - 1
+        self.frames[0].stream = parser.parse(stream)
+        self.frames[0].stream_size = len(self.frames[0].stream) - 1
 
-        self.initialize_markers()
+        self.initialize_markers(0)
 
         while True:
             inst = self.next_instruction()
             if inst is None:
                 break
 
-            if self.IP > self.target_IP:
-                self.target_IP = -1
+            frame: Frame = self.frames[self.IP.frame]
+
+            if self.IP.inst > frame.target_IP:
+                frame.target_IP = -1
 
             opcode = inst.opcode
-            if self.forwarded_args:
-                args = self.forwarded_args
-                self.forwarded_args = []
+            if frame.forwarded_args:
+                args = frame.forwarded_args
+                frame.forwarded_args = []
             else:
                 args = inst.opargs
 
@@ -66,8 +64,10 @@ class VirtualMachine:
                     "\nInst: {} {} ({}){}".format(
                         OP_MAP[opcode],
                         args,
-                        self.forwarded_args,
-                        f" {self.target_IP - self.IP}" if self.target_IP >= 0 else "",
+                        frame.forwarded_args,
+                        f" {frame.target_IP - self.IP.inst}"
+                        if frame.target_IP >= 0
+                        else "",
                     )
                 )
 
@@ -118,7 +118,7 @@ class VirtualMachine:
                 BINARY_ADD
                 """
                 # print("loaded:", self.memory[args[0]])
-                self.stack.push(self.memory[args[0]])
+                self.stack.push(frame.memory[args[0]])
 
             elif opcode == STORE_MEMORY:
                 """
@@ -128,7 +128,7 @@ class VirtualMachine:
                 PUSH_STACK 5
                 STORE_MEMORY 1
                 """
-                self.memory[args[0]] = self.stack.pop()
+                frame.memory[args[0]] = self.stack.pop()
 
             elif opcode == DUP_TOP:
                 """
@@ -161,13 +161,13 @@ class VirtualMachine:
                 if addr == 0:
                     self.stack.push(String(stdin.read()))
                 else:
-                    stream = self.memory[addr]
-                    if not isinstance(stream, io.TextIOWrapper):
-                        raise Exception("MEMORY[{}] is not a file".format(addr))
+                    fstream = frame.memory[addr]
+                    if not isinstance(fstream, io.TextIOWrapper):
+                        logging.error("MEMORY[{}] is not a file".format(addr))
 
                     terminator = chr(self.stack.pop())
                     string = ""
-                    while (char := stream.read(1)) != terminator and char != "":
+                    while (char := fstream.read(1)) != terminator and char != "":
                         string += char
                     self.stack.push(string)
 
@@ -189,11 +189,11 @@ class VirtualMachine:
                     # self.stack.push(String(stdin.read(1)))
                     self.stack.push(ord(stdin.read(1)))
                 else:
-                    stream = self.memory[addr]
+                    fstream = frame.memory[addr]
                     if not isinstance(stream, io.TextIOWrapper):
-                        raise Exception("MEMORY[{}] is not a file".format(addr))
+                        logging.error("MEMORY[{}] is not a file".format(addr))
 
-                    self.stack.push(String(stream.read(1)))
+                    self.stack.push(String(fstream.read(1)))
 
             elif opcode == WRITE_TO:
                 """
@@ -210,11 +210,11 @@ class VirtualMachine:
                         stdout.write(str(content))
                     stdout.flush()
                 else:
-                    stream = self.memory[addr]
+                    fstream = frame.memory[addr]
                     if not isinstance(stream, io.TextIOWrapper):
-                        raise Exception("MEMORY[{}] is not a file".format(addr))
+                        logging.error("MEMORY[{}] is not a file".format(addr))
 
-                    stream.write(self.stack.pop())
+                    fstream.write(self.stack.pop())
                     self.stack.push(string)
 
             elif opcode == OPEN_FILE:
@@ -230,7 +230,7 @@ class VirtualMachine:
                     # print(MODES[mode])
                     self.stack.push(open(file, MODES[mode]))
                 else:
-                    raise Exception(
+                    logging.error(
                         "Invalid file mode {}. Range: 0b0000-0b1111.".format(bin(mode))
                     )
 
@@ -241,7 +241,7 @@ class VirtualMachine:
 
                 MAKE_MARKER 1
                 """
-                self.memory[args[0]] = Marker(self.IP)
+                frame.memory[args[0]] = Marker(self.IP)
 
             elif opcode == GOTO_MARKER:
                 """
@@ -256,15 +256,18 @@ class VirtualMachine:
                 GOTO_MARKER 1
                 """
                 if args[0] == 0:
-                    self.IP = self.last_goto
+                    self.IP.frame = self.last_goto.frame
+                    self.IP.inst = self.last_goto.inst
                     continue
 
-                target_marker = self.memory[args[0]]
+                target_marker = frame.memory[args[0]]
                 if not isinstance(target_marker, Marker):
-                    raise Exception("Invalid marker at MEMORY[{}]".format(args[0]))
+                    logging.error("Invalid marker at MEMORY[{}]".format(args[0]))
 
-                self.last_goto = self.IP
-                self.IP = target_marker.index
+                self.last_goto.frame = self.IP.frame
+                self.last_goto.inst = self.IP.inst
+                self.IP.frame = target_marker.frame
+                self.IP.inst = target_marker.inst
 
             #
             # Arithmetic
@@ -376,44 +379,146 @@ class VirtualMachine:
             #
 
             elif opcode == IF_RUN_NEXT:
-                self.target_IP = self.IP + args[0]
+                frame.target_IP = self.IP.inst + args[0]
                 if not self.stack.pop():
-                    self.IP += args[0]
+                    self.IP.inst += args[0]
 
             elif opcode == SKIP_NEXT:
-                self.IP += args[0]
+                self.IP.inst += args[0]
 
             elif opcode == GO_BACK:
-                self.IP -= args[0] + 1
+                self.IP.inst -= args[0] + 1
 
             #
             # Uncategorized instructions
             #
 
             elif opcode == FORWARD_ARGS:
-                if self.stream[self.IP + 1].opcode in ONE_ARG:
-                    self.forwarded_args = [self.stack.pop()]
+                if frame.stream[self.IP.inst + 1].opcode in ONE_ARG:
+                    frame.forwarded_args = [self.stack.pop()]
 
             elif opcode == ROT_TWO:
+                """
+                Swaps the positions of the top two stack values.
+
+                PUSH_STACK 1
+                PUSH_STACK 2
+                ;; stack: 1, 2
+                ROT_TWO
+                ;; stack: 2, 1
+                """
                 a = self.stack.pop()
                 b = self.stack.pop()
                 self.stack.push(a)
                 self.stack.push(b)
 
+            elif opcode == ROT_THREE:
+                """
+                Shifts the third and second stack values up one and
+                moves the first one down to the third position.
+
+                PUSH_STACK 1
+                PUSH_STACK 2
+                PUSH_STACK 3
+                ;; stack: 1, 2, 3
+                ROT_THREE
+                ;; stack: 3, 1, 2
+                """
+                a = self.stack.pop()
+                b = self.stack.pop()
+                c = self.stack.pop()
+                self.stack.push(a)
+                self.stack.push(c)
+                self.stack.push(b)
+
+            #
+            # Importing
+            #
+
+            elif opcode == IMPORT_MODULE:
+                """
+                Imports a module. Uses string in stack as filename
+                and argument as frame number.
+
+                PUSH_STRING_STACK "module.bin\0"
+                IMPORT_MODULE 1
+                """
+                if self.flags.step:
+                    print("Importing module")
+                module_path = os.path.join(
+                    os.getcwd(), os.path.dirname(frame.file), str(self.stack.pop())
+                )
+
+                # Check if file exists
+                if not os.path.isfile(module_path):
+                    logging.error(f"ImportError: '{module_path}' is not a file")
+
+                # Import module
+                with open(module_path, "rb") as bytes_file:
+                    module_code = [int(c) for c in bytes_file.read()]
+
+                # Create a new frame
+                if args[0] >= len(self.frames):
+                    self.frames.extend([None] * (args[0] - len(self.frames) + 1))
+
+                frame = Frame(module_path)
+
+                # Run the code to initialize the memory
+                vm = VirtualMachine("", self.flags)
+                vm.main_loop(module_code)
+                frame.stream = vm.frames[0].stream
+                frame.stream_size = vm.frames[0].stream_size
+                frame.memory = vm.frames[0].memory
+
+                self.frames[args[0]] = frame
+
+                self.initialize_markers(args[0])
+
+                if self.flags.step:
+                    print("Finished importing\n\nCont. IMPORT_MODULE")
+
+            elif opcode == PUSH_STACK_MODULE:
+                """
+                Pushes a value from memory in a module to stack.
+                """
+                self.stack.push(self.frames[args[0]].memory[args[1]])
+
+            elif opcode == GOTO_MODULE:
+                """
+                Goes to a marker in a module.
+                """
+                self.last_goto.frame = self.IP.frame
+                self.last_goto.inst = self.IP.inst
+
+                target_marker = self.frames[args[0]].memory[args[1]]
+                self.IP.frame = args[0]
+                self.IP.inst = target_marker.inst
+
             else:
-                raise NotImplementedError(
+                logging.error(
                     "Unknown instruction: {}".format(bin(opcode)[2:].rjust(2, "0"))
                 )
 
             if self.flags.step:
                 input(
                     "Mem: {}\nStk: {}".format(
-                        self.memory.memory,
+                        frame.memory.memory,
                         self.stack.stack,
                     )
                 )
 
-    def initialize_markers(self) -> None:
+    def initialize_markers(self, frame_index: int) -> None:
+        """
+        Scan the instructions in a stream and perform the following tasks:
+        1. Initialize markers into memory
+        2. Load modules
+        """
+        start_frame = self.IP.frame
+        start_inst = self.IP.inst
+
+        self.IP.frame = frame_index
+        frame = self.frames[frame_index]
+
         while True:
             inst = self.next_instruction()
             if inst is None:
@@ -422,8 +527,25 @@ class VirtualMachine:
             if inst.opcode == MAKE_MARKER:
                 addr = inst.opargs[0]
                 # Only initialize the first occurance of a marker
-                if addr < self.memory.size and isinstance(self.memory[addr], Marker):
+                if addr < frame.memory.size and isinstance(frame.memory[addr], Marker):
                     continue
-                self.memory[addr] = Marker(self.IP)
+                frame.memory[addr] = Marker(self.IP)
 
-        self.IP = -1
+            # elif inst.opcode == IMPORT_MODULE:
+
+        self.IP.frame = start_frame
+        self.IP.inst = start_inst
+
+
+class Frame:
+    def __init__(self, file: str):
+        self.file: str = file
+
+        self.memory: Memory = Memory()
+
+        self.stream: List[Instruction] = []
+        self.stream_size: int = 0
+
+        self.forwarded_args: List[Any] = []
+
+        self.target_IP: int = -1

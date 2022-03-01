@@ -3,14 +3,6 @@ from typing import List, Union
 import binarypp.utils as utils
 
 
-class Marker:
-    def __init__(self, index: int):
-        self.index = index
-
-    def __repr__(self) -> str:
-        return "Marker({})".format(self.index)
-
-
 class String:
     def __init__(self, data: Union[List[int], str, int]):
         self.data: List[int] = []
@@ -36,3 +28,17 @@ class Instruction:
             utils.to_binary_str(self.opcode),
             ", ".join([utils.to_binary_str(code) for code in self.opargs]),
         )
+
+
+class Pointer:
+    def __init__(self, frame: int, inst: int):
+        self.frame = frame
+        self.inst = inst
+
+
+class Marker(Pointer):
+    def __init__(self, pointer: Pointer):
+        super().__init__(pointer.frame, pointer.inst)
+
+    def __repr__(self) -> str:
+        return "Marker({}, {})".format(self.frame, self.inst)

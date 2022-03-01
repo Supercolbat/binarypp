@@ -6,6 +6,7 @@ Prefixes:
 1110 - equality
 1010 - conditionals
 1001 - ?
+1111 - modules
 """
 
 """
@@ -56,6 +57,10 @@ SKIP_NEXT           = 0b10100001
 GO_BACK             = 0b10100010
 FORWARD_ARGS        = 0b10010000
 ROT_TWO             = 0b10010001
+ROT_THREE           = 0b10010010
+IMPORT_MODULE       = 0b11110000
+PUSH_STACK_MODULE   = 0b11110001
+GOTO_MODULE         = 0b11111000
 # fmt: on
 
 NO_ARG = (
@@ -82,6 +87,7 @@ NO_ARG = (
     GREATER_EQUAL_THAN,
     FORWARD_ARGS,
     ROT_TWO,
+    ROT_THREE,
 )
 ONE_ARG = (
     PUSH_STACK,
@@ -96,5 +102,10 @@ ONE_ARG = (
     IF_RUN_NEXT,
     SKIP_NEXT,
     GO_BACK,
+    IMPORT_MODULE,
+)
+TWO_ARG = (
+    PUSH_STACK_MODULE,
+    GOTO_MODULE,
 )
 MULTI_ARG = (PUSH_STRING_STACK, PUSH_LONG_STACK)
