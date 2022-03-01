@@ -36,9 +36,9 @@ class VirtualMachine:
             return frame.stream[self.IP.inst]
         return None
 
-    def main_loop(self, stream: List[int]) -> None:
-        self.frames[0].stream = parser.parse(stream)
-        self.frames[0].stream_size = len(self.frames[0].stream) - 1
+    def main_loop(self, stream: List[Instruction]) -> None:
+        self.frames[0].stream = stream
+        self.frames[0].stream_size = len(stream) - 1
 
         self.initialize_markers(0)
 
@@ -454,8 +454,8 @@ class VirtualMachine:
                     logging.error(f"ImportError: '{module_path}' is not a file")
 
                 # Import module
-                with open(module_path, "rb") as bytes_file:
-                    module_code = [int(c) for c in bytes_file.read()]
+                with open(module_path, "r") as file:
+                    module_code = parser.parse(file.read())
 
                 # Create a new frame
                 if args[0] >= len(self.frames):

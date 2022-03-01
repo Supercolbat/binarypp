@@ -1,14 +1,22 @@
-import sys
 from typing import List
 
+import binarypp.logging as logging
 import binarypp.utils as utils
 from binarypp.types import Instruction
 from binarypp.vm.opcodes import *
 
 
-def parse(code: List[int]) -> List[Instruction]:
+def parse(raw_code: str) -> List[Instruction]:
     tokens: List[Instruction] = []
     IP = 0
+
+    # Check if file is in interpret-mode
+    code_split = raw_code.split()
+    if code_split[0] == "00000000":
+        code = [int(c, 2) for c in list(filter(utils.is_binary, code_split))]
+        code.pop(0)
+    else:
+        code = [ord(c) for c in raw_code]
 
     try:
         while IP < len(code):
@@ -34,8 +42,9 @@ def parse(code: List[int]) -> List[Instruction]:
 
             elif opcode in MULTI_ARG:
                 if 0 not in code[IP:]:
-                    print("Missing a null-terminator at instruction", len(tokens))
-                    sys.exit(1)
+                    logging.error(
+                        f"Missing a null-terminator at instruction {len(tokens)}"
+                    )
 
                 # Read all arguments until 00000000 is reached
                 args = []
@@ -48,12 +57,11 @@ def parse(code: List[int]) -> List[Instruction]:
                 tokens.append(Instruction(opcode, args))
 
             else:
-                raise NameError("Unknown opcode: " + utils.to_binary_str(opcode))
+                logging.error("Unknown opcode: " + utils.to_binary_str(opcode))
 
             IP += 1
 
     except IndexError:
-        print("An instruction is missing an argument.")
-        sys.exit(1)
+        logging.error("An instruction is missing an argument.")
 
     return tokens

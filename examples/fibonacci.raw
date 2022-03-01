@@ -1,3 +1,5 @@
+00000000
+
 ;; Returns the nth fibonacci number ;;
 
 [RESERVED, LOOP_MARKER, n, a, b, c, ten]

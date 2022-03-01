@@ -1,4 +1,3 @@
-
 """
 Test features in binarypp.vm.stack
 """

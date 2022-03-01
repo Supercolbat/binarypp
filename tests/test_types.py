@@ -2,13 +2,14 @@
 Test features in binarypp.types
 """
 
-from binarypp.types import Instruction, Marker, String, Pointer
+from binarypp.types import Instruction, Marker, Pointer, String
 
 
 def test_pointer():
     new_pointer = Pointer(0, 1)
     assert new_pointer.frame == 0
     assert new_pointer.inst == 1
+
 
 def test_marker():
     new_marker = Marker(Pointer(0, 1))

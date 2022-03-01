@@ -17,12 +17,6 @@ def main() -> None:
         help="Compiles the supplied file and writes to the target file.",
     )
     parser.add_argument(
-        "--interpret",
-        "-i",
-        help="Interprets the target file and executes it.",
-        action="store_true",
-    )
-    parser.add_argument(
         "--verbose",
         "-v",
         help="Change verbosity level.",
@@ -59,34 +53,22 @@ def main() -> None:
     if args.compile:
         with open(args.compile, "r", encoding="utf-8") as file:
             code = file.read()
+
+        # Check for missing args
+        binarypp.parser.parse(code)
+
         compiled_code = utils.binary_to_chars(
             list(filter(utils.is_binary, code.split()))
         )
-
-        # Check for missing args
-        binarypp.parser.parse([ord(char) for char in compiled_code])
 
         with open(args.FILE, "w+", encoding="latin1") as file:
             file.write(compiled_code)
 
         logging.success("Successfully compiled file")
 
-    elif args.interpret:
-        with open(args.FILE, "r", encoding="utf-8") as file:
+    else:
+        with open(args.FILE, "r", encoding="latin1") as file:
             code = file.read()
 
-        code_binary = [int(c, 2) for c in list(filter(utils.is_binary, code.split()))]
-
-        # Check for missing args
-        binarypp.parser.parse(code_binary)
-
         vm = VirtualMachine(args.FILE, args)
-        vm.main_loop(code_binary)
-
-    else:
-        with open(args.FILE, "rb") as bytes_file:
-            code_bytes = bytes_file.read()
-
-        vm = VirtualMachine(args.FILE, args)
-        vm.main_loop([int(c) for c in code_bytes])
-        # print(vm.memory.memory)
+        vm.main_loop(binarypp.parser.parse(code))
