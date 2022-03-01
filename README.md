@@ -35,49 +35,21 @@ WRITE_TO 00000000 (stdout)
 ```
 
 ## Running
-If you already have a compiled Binary++ program, you can run it with:
+You can run any Binary++ program by passing the path directly in the command.
 ```sh
-binarypp path/to/your/code.bin
+binarypp path/to/your/code
 ```
 
-If you wrote your code in plaintext ("Raw" in Examples), you can either compile it or interpret it.
-
-To compile:
+If you have plaintext code, you can compile it down into characters:
 ```sh
 binarypp --compile path/to/your/plaintext.raw output.bin
 binarypp output.bin
-```
-
-To interpet:
-```sh
-binarypp --interpret path/to/your/plaintext.raw
 ```
 
 The file extensions `.raw` and `.bin` are not required and are only used to highlight the difference between plaintext and compiled.
 
 ## TODO
 An up-to-date TODO list can be found in the [Projects](https://github.com/Supercolbat/binarypp/projects/1) tab.
-
-**Language related**
-- [x] Full STDIN/OUT support
-- [x] Jumps (markers)
-  - [x] MAKE_MARKER and GOTO_MARKER
-  - [x] Initialize markers before execution
-- [x] Conditionals
-  - [x] Implement IF_NEXT_SKIP and SKIP_NEXT 
-  - [x] IF_NEXT_SKIP and SKIP_NEXT should skip instructions and ignore arguments
-
-**Tools**
-- [ ] Proper CLI argument parsing
-  - [x] Translate a "raw binary" file into characters
-  - [ ] Verbosity for debugging
-  - [ ] REPL mode?
-- [ ] Port to C (or to Rust)
-- [x] Syntax checker
-  - Verify no arguments are missing
-  - Missing terminator checker (PUSH_STRING_STACK)
-- [ ] Compiler?
-  - A compiler for binary sounds cool, but I have no knowledge in writing compilers
 
 ## Inspiration
 While recreating the CPython VM, I came across the idea of not only just creating my own bytecode, but creating my own language. In VMs, bytecode is generally represented with either hexadecimal or decimal, but I chose the route of representing them in binary because...
