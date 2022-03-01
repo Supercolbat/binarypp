@@ -1,5 +1,6 @@
 from typing import Any, List
 
+import binarypp.logging as logging
 
 class Memory:
     def __init__(self) -> None:
@@ -15,7 +16,7 @@ class Memory:
 
     def __getitem__(self, index: int) -> Any:
         if index == 0:
-            raise Exception("Accessing reserved memory: MEMORY[0]")
+            logging.error("Accessing reserved memory: MEMORY[0]")
 
         if index >= self.size:
             self._expand_memory_until(index)
