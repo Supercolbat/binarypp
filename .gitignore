@@ -15,10 +15,10 @@ ignore/
 code.bin
 .coverage
 
-# Development scripts
-install.sh
-fmt.sh
-
 # Replit!!
 .replit
 .breakpoints
+
+# Soon added
+editor/
+lib/

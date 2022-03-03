@@ -12,7 +12,6 @@ class Stack:
 
     def push(self, value: Any) -> None:
         self.stack.append(value)
-        # print(self.stack)
 
     def pop(self) -> Any:
         if self.is_empty():

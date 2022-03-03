@@ -31,6 +31,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--version",
+        "-V",
         help="Prints the version and exits.",
         action="store_true",
     )
@@ -44,15 +45,19 @@ def main() -> None:
 
     # Check if file argument is missing
     if not args.FILE:
-        logging.error("Missing FILE argument")
+        logging.error("No file was supplied :(")
 
-    # Verify file exists
+    # Check if file does not exist
     if not os.path.isfile(args.compile if args.compile else args.FILE):
-        logging.error("{} is not a file".format(args.FILE))
+        logging.error("'{}' does not exist".format(args.FILE))
 
     if args.compile:
         with open(args.compile, "r", encoding="utf-8") as file:
             code = file.read()
+
+        # Strip away the interpret flag if present
+        if code.startswith("00000000"):
+            code = code[8:]
 
         # Check for missing args
         binarypp.parser.parse(code)
@@ -61,10 +66,16 @@ def main() -> None:
             list(filter(utils.is_binary, code.split()))
         )
 
-        with open(args.FILE, "w+", encoding="latin1") as file:
-            file.write(compiled_code)
+        try:
+            with open(args.FILE, "w+", encoding="latin1") as file:
+                file.write(compiled_code)
 
-        logging.success("Successfully compiled file")
+            logging.success("Successfully compiled file")
+        except PermissionError:
+            logging.error(
+                "Could not write to file. You might need to make it writable"
+                "by running 'chmod +w {}'".format(args.FILE)
+            )
 
     else:
         with open(args.FILE, "r", encoding="latin1") as file:

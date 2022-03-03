@@ -21,7 +21,6 @@ def parse(raw_code: str) -> List[Instruction]:
     try:
         while IP < len(code):
             opcode = code[IP]
-            # print(utils.to_binary_str(opcode))
 
             if opcode in NO_ARG:
                 tokens.append(Instruction(opcode))
@@ -43,25 +42,31 @@ def parse(raw_code: str) -> List[Instruction]:
             elif opcode in MULTI_ARG:
                 if 0 not in code[IP:]:
                     logging.error(
-                        f"Missing a null-terminator at instruction {len(tokens)}"
+                        f"You are missing a 00000000 to end instruction #{len(tokens)}"
                     )
 
                 # Read all arguments until 00000000 is reached
                 args = []
-                while code[IP + 1] != 0:
-                    IP += 1
-                    args.append(code[IP])
-
-                # Skip the 00000000 byte
                 IP += 1
+                while code[IP] != 0:
+                    args.append(code[IP])
+                    IP += 1
+
                 tokens.append(Instruction(opcode, args))
 
             else:
-                logging.error("Unknown opcode: " + utils.to_binary_str(opcode))
+                # This formatting may not work on all terminals
+                logging.error(
+                    f"Uh oh! This instruction isn't defined! "
+                    f"{utils.to_binary_str(opcode)}\n"
+                    f"   Check instruction #{len(tokens)}"
+                )
 
             IP += 1
 
     except IndexError:
-        logging.error("An instruction is missing an argument.")
+        logging.error(
+            "We don't know where, but one of your instructions is missing an argument!"
+        )
 
     return tokens
