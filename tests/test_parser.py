@@ -1,6 +1,7 @@
 import binarypp.parser as parser
-
 from binarypp.vm.opcodes import *
+
+
 def test_parser():
     raw_code = """
 00000000

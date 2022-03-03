@@ -8,7 +8,7 @@ from binarypp.vm.memory import Memory
 class TestMemory:
     def setup_class(self):
         self.memory = Memory()
-        
+
         assert self.memory.memory == [0]
         assert self.memory.size == 1
 
