@@ -148,6 +148,7 @@ class VirtualMachine:
                 Pushes text to stack. Terminator is consumed but excluded.
                 0 is stdin. Any other value is read from memory to determine source.
 
+                PUSH_STACK \10
                 READ_FROM 0 (stdin)
                 PUSH_STRING_STACK "file.txt"
                 OPEN_FILE 0
@@ -157,17 +158,26 @@ class VirtualMachine:
                 WRITE_TO 0 (stdin)
                 """
                 addr = args[0]
+                terminator = chr(self.stack.pop())
 
                 if addr == 0:
-                    self.stack.push(String(stdin.read()))
+                    string = ""
+                    while True:
+                        ch = stdin.read(1)
+                        if ch == terminator:
+                            break
+                        string += ch
+                    self.stack.push(String(string))
+
                 else:
                     fstream = frame.memory[addr]
                     if not isinstance(fstream, io.TextIOWrapper):
                         logging.error("MEMORY[{}] is not a file".format(addr))
 
-                    terminator = chr(self.stack.pop())
                     string = ""
-                    while (char := fstream.read(1)) != terminator and char != "":
+                    while True:
+                        if (char := fstream.read(1)) == terminator or char != "":
+                            break
                         string += char
                     self.stack.push(string)
 
@@ -454,7 +464,7 @@ class VirtualMachine:
                     logging.error(f"ImportError: '{module_path}' is not a file")
 
                 # Import module
-                with open(module_path, "r") as file:
+                with open(module_path, "r", encoding="latin1") as file:
                     module_code = parser.parse(file.read())
 
                 # Create a new frame

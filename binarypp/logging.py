@@ -2,8 +2,8 @@ import os
 import sys
 
 #
-# Check if the NO_COLOR environment variable is set.
-# If it is, provide alternative log messages.
+# Provide alternative log message if the
+# NO_COLOR environment variable is set.
 #
 if os.getenv("NO_COLOR"):
 
@@ -19,8 +19,8 @@ if os.getenv("NO_COLOR"):
         if log_level >= 3:
             print("INFO: ", log_message)
 
-    def error(log_message: str, terminate: bool = True) -> None:
-        sys.stderr.write("✗ " + log_message + "\n")
+    def error(log_message: str, terminate: bool = True, prompt: bool = False) -> None:
+        sys.stderr.write("✗ " + log_message + (" " if prompt else "\n"))
         if terminate:
             sys.exit(1)
 
@@ -46,8 +46,8 @@ else:
         if log_level >= 3:
             print("\u001b[36mi\u001b[0m", log_message)
 
-    def error(log_message: str, terminate: bool = True) -> None:
-        sys.stderr.write("❌ " + log_message + "\n")
+    def error(log_message: str, terminate: bool = True, prompt: bool = False) -> None:
+        sys.stderr.write("❌ " + log_message + (" " if prompt else "\n"))
         if terminate:
             sys.exit(1)
 

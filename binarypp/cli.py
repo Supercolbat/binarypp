@@ -1,5 +1,5 @@
 import argparse
-import os.path
+import os
 import sys
 
 import binarypp
@@ -45,22 +45,56 @@ def main() -> None:
 
     # Check if file argument is missing
     if not args.FILE:
-        logging.error("No file was supplied :(")
+        if args.compile:
+            logging.error("No output file was supplied :(")
+        else:
+            logging.error("No file was supplied :(")
 
     # Check if file does not exist
-    if not os.path.isfile(args.compile if args.compile else args.FILE):
-        logging.error("'{}' does not exist".format(args.FILE))
+    target_file = args.compile if args.compile else args.FILE
+    if not os.path.isfile(target_file):
+        # Suggest possible file in case of typo
+        # TODO: Current method is less than optimal
+        files = []
+        dir_path = os.path.dirname(target_file)
+        dir_path = dir_path if dir_path else "."
+
+        for (dirpath, dirnames, filenames) in os.walk(dir_path):
+            files.extend(filenames)
+            break
+
+        match = utils.fuzzy_search(os.path.basename(target_file), files)
+
+        if match is not None:
+            logging.error(
+                "'{}' does not exist! Did you mean '{}'? (yN)".format(
+                    target_file,
+                    f"{dir_path}/{match}",
+                ),
+                False,
+                True,
+            )
+
+            if input().lower()[0] != "y":
+                sys.exit(0)
+
+            if args.compile:
+                args.compile = f"{dir_path}/{match}"
+            else:
+                args.FILE = f"{dir_path}/{match}"
+        else:
+            logging.error("'{}' does not exist! Are you in the right directory?")
 
     if args.compile:
         with open(args.compile, "r", encoding="utf-8") as file:
             code = file.read()
 
+        # Check for missing args
+        binarypp.parser.parse(code)
+
         # Strip away the interpret flag if present
         if code.startswith("00000000"):
             code = code[8:]
-
-        # Check for missing args
-        binarypp.parser.parse(code)
 
         compiled_code = utils.binary_to_chars(
             list(filter(utils.is_binary, code.split()))
@@ -70,7 +104,7 @@ def main() -> None:
             with open(args.FILE, "w+", encoding="latin1") as file:
                 file.write(compiled_code)
 
-            logging.success("Successfully compiled file")
+            logging.success("Successfully compiled the program")
         except PermissionError:
             logging.error(
                 "Could not write to file. You might need to make it writable"
