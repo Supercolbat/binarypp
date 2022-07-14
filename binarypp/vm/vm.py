@@ -100,11 +100,16 @@ class VirtualMachine:
 
             elif opcode == PUSH_LONG_STACK:
                 """
-                Pushes all codes as an int until a null-terminator is reached.
+                Pushes all codes as a one binary number until a null-terminator
+                is reached.
 
-                PUSH_LONG_STACK 255 255 10\0
+                PUSH_LONG_STACK 00000101 00111001\0 (1337 in binary)
                 """
-                self.stack.push(sum(args))
+                long = args[0]
+                for arg in args[1:]:
+                    long <<= 8
+                    long += arg
+                self.stack.push(long)
 
             elif opcode == LOAD_MEMORY:
                 """
