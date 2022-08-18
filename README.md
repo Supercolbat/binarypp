@@ -15,7 +15,6 @@ To clarify on that last one, Binary++ supports both structured and unstructured 
 
 ## Features
 - Turing complete
-  - I don't think this is actually a heap but I don't have a better term for it.
 - Full STDIN/OUT access (mostly)
 - A free, unlimited use "I code in Binary" pass
 

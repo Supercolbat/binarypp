@@ -1,6 +1,6 @@
 00000000
 
-;; Push "Hello, world!" to the stack
+;; Push "Hello, world!\n" to the stack
 00000101 01001000 01100101 01101100 01101100 01101111 00101100 00100000 01110111 01101111 01110010 01101100 01100100 00100001 00001010 00000000
 
 ;; Display the top-most value from the stack to STDOUT (0).
